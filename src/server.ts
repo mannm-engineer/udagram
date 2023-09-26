@@ -28,31 +28,35 @@ import { filterImageFromURL, deleteLocalFiles } from "./util/util";
 
   /**************************************************************************** */
 
-  app.get("/filteredimage", async (req, res) => {
-    // Get the image_url query parameter from the request
-    const { image_url } = req.query;
+  app.get(
+    "/filteredimage",
+    async (req: express.Request, res: express.Response) => {
+      // Get the image_url query parameter from the request
+      const { image_url } = req.query;
 
-    // Check if image_url is provided in the query parameters
-    if (!image_url) {
-      return res.status(400).send("image_url is required");
+      // Check if image_url is provided in the query parameters
+      if (!image_url) {
+        return res.status(400).send("image_url is required");
+      }
+
+      // Call filterImageFromURL to filter the image
+      try {
+        const filteredImagePath = await filterImageFromURL(image_url);
+
+        // Send the filtered image file in the response
+        res.sendFile(filteredImagePath, () => {
+          // Cleanup: Delete the local filtered image file after sending
+          deleteLocalFiles([filteredImagePath]);
+        });
+      } catch (error) {
+        // Handle any errors that occurred during image filtering
+        console.log(error);
+        return res
+          .status(500)
+          .send("An error occurred while processing the image");
+      }
     }
-
-    // Call filterImageFromURL to filter the image
-    try {
-      const filteredImagePath = await filterImageFromURL(image_url);
-
-      // Send the filtered image file in the response
-      res.sendFile(filteredImagePath, () => {
-        // Cleanup: Delete the local filtered image file after sending
-        deleteLocalFiles([filteredImagePath]);
-      });
-    } catch (error) {
-      // Handle any errors that occurred during image filtering
-      return res
-        .status(500)
-        .send("An error occurred while processing the image");
-    }
-  });
+  );
 
   //! END @TODO1
 
